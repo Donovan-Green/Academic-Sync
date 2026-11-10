@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Academic Sync - Control de Pagos</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Estilo verde institucional de la universidad */
+        .btn-verde-upen {
+            background-color: #1b5e20 !important;
+            border-color: #1b5e20 !important;
+            color: #ffffff !important;
+        }
+        .btn-verde-upen:hover {
+            background-color: #134616 !important;
+            border-color: #134616 !important;
+            color: #ffffff !important;
+        }
+    </style>
+</head>
+<body class="container mt-4">
+
+    <!-- Encabezado Principal -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Academic Sync - Pagos</h1>
+        <div>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm">Volver a Alumnos</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <!-- Saludo y Rol actual -->
+    <p>Bienvenido: <b>{{ session['username'] }}</b> | Rol: <b>{{ role }}</b></p>
+    
+    <hr>
+
+    <h3 class="mb-3">Historial y Estatus de Pagos</h3>
+
+    <!-- BARRA DE BÚSQUEDA RÁPIDA -->
+    <form method="GET" action="{{ url_for('pagos') }}" class="input-group mb-4">
+        <input type="text" name="buscar" class="form-control" placeholder="Escribe la matrícula del alumno (ej. A001)..." value="{{ busqueda }}">
+        
+        <!-- Botón de buscar con el verde institucional -->
+        <button class="btn btn-verde-upen" type="submit">Buscar</button>
+        
+        <!-- Enlace de Ver Todos con parámetro explícito -->
+        <a href="{{ url_for('pagos', ver_todos=1) }}" class="btn btn-outline-secondary">Ver Todos</a>
+    </form>
+
+    <!-- Tabla conectada con JOINs para mostrar nombres reales -->
+    <table class="table table-bordered table-striped">
+        <!-- Encabezado de la tabla con el color verde institucional -->
+        <thead class="btn-verde-upen text-white">
+            <tr>
+                <th>ID Pago</th>
+                <th>Matrícula Alumno</th>
+                <th>Nombre del Alumno</th>
+                <th>Materia</th>
+                <th>Tipo de Examen</th>
+                <th>Estatus</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Ciclo for de Jinja2 para recorrer los registros con JOIN -->
+            {% for p in pagos %}
+            <tr>
+                <td>{{ p.payment_id }}</td>
+                <td>{{ p.student_id }}</td>
+                <td>{{ p.student_name }}</td>
+                <td>{{ p.subject_name }}</td>
+                
+                <!-- Columna Tipo de Examen (Menú para Profesor / Texto fijo para Servicios Escolares) -->
+                <td>
+                    {% if role.lower() in ['profesor', 'maestro'] %}
+                        <form action="{{ url_for('actualizar_tipo_examen', payment_id=p.payment_id) }}" method="POST" class="d-inline">
+                            <select name="exam_type" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                                <option value="Ordinario" {% if p.exam_type == 'Ordinario' %}selected{% endif %}>Ordinario</option>
+                                <option value="Remedial" {% if p.exam_type == 'Remedial' %}selected{% endif %}>Remedial</option>
+                                <option value="Extraordinario" {% if p.exam_type == 'Extraordinario' %}selected{% endif %}>Extraordinario</option>
+                            </select>
+                        </form>
+                    {% else %}
+                        {{ p.exam_type }}
+                    {% endif %}
+                </td>
+
+                <!-- Columna Estatus (Menú desplegable con color para Servicios Escolares / Insignia para Profesores) -->
+                <td>
+                    {% if role.lower() in ['servicios', 'servicios escolares'] %}
+                        <form action="{{ url_for('actualizar_tipo_examen', payment_id=p.payment_id) }}" method="POST" class="d-inline">
+                            <select name="status" class="form-select form-select-sm d-inline-block w-auto fw-bold {% if p.status == 'Paid' or p.status == 'Pagado' or p.status == 'Completado' %}bg-success text-white{% else %}bg-warning text-dark{% endif %}" onchange="this.form.submit()">
+                                <option value="Pagado" {% if p.status == 'pagado' %}selected{% endif %}>Paid</option>
+                                <option value="Pendiente" {% if p.status == 'pendiente' %}selected{% endif %}>Pending</option>
+                            </select>
+                        </form>
+                    {% else %}
+                        {% if p.status == 'Pagado' or p.status == 'Completado' or p.status == 'Paid' %}
+                            <span class="badge bg-success">{{ p.status }}</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">{{ p.status }}</span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <!-- Mensaje dinámico en caso de que la tabla esté vacía inicialmente o sin resultados -->
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    {% if busqueda %}
+                        No se encontró ningún registro con la búsqueda "<b>{{ busqueda }}</b>".
+                    {% else %}
+                        Ingresa una matrícula en el buscador para consultar los pagos o haz clic en <b>"Ver Todos"</b>.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

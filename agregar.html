@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Academic Sync - Registrar Alumno</title>
+</head>
+<body>
+    <h1>Academic Sync</h1>
+    <h2>Registrar Nuevo Alumno</h2>
+
+    <form action="{{ url_for('agregar') }}" method="POST">
+        <label for="student_id">ID de Estudiante:</label><br>
+        <input type="text" id="student_id" name="student_id" required><br><br>
+
+        <label for="full_name">Nombre Completo:</label><br>
+        <input type="text" id="full_name" name="full_name" required><br><br>
+
+        <label for="career">Carrera:</label><br>
+        <input type="text" id="career" name="career" required><br><br>
+
+        <button type="submit">Guardar Alumno</button>
+    </form>
+
+    <br>
+    <p><a href="{{ url_for('index') }}">← Volver al Listado</a></p>
+</body>
+</html>
